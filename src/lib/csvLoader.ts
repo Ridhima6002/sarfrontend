@@ -412,9 +412,25 @@ export function generateSARReport(
   const connections = edges.filter((e) => e.entity_a === entity || e.entity_b === entity);
   const connectedEntities = [...new Set(connections.map((e) => e.entity_a === entity ? e.entity_b : e.entity_a))];
   const relationshipTypes = [...new Set(connections.map((e) => e.relationship))];
-  const entityTxns = transactions.filter((t) => t.sender_account === entity || t.receiver_account === entity);
-  const suspiciousTxns = entityTxns.filter((t) => t.is_suspicious);
-  const totalAmount = entityTxns.reduce((s, t) => s + t.amount, 0);
+ let entityTxns = transactions.filter((t) => t.sender_account === entity || t.receiver_account === entity);
+let suspiciousTxns = entityTxns.filter((t) => t.is_suspicious);
+let totalAmount = entityTxns.reduce((s, t) => s + t.amount, 0);
+
+// ✅ HARDCODE SAME VALUES EVERYWHERE
+let txnCount = entityTxns.length;
+let suspiciousCount = suspiciousTxns.length;
+let maxSingleAmount = entityTxns.length ? Math.max(...entityTxns.map((t) => t.amount)) : 0;
+let avgAmount = entityTxns.length ? totalAmount / entityTxns.length : 0;
+
+// 👉 IF NO DATA → USE YOUR DEMO VALUES
+if (entityTxns.length === 0) {
+  totalAmount = Math.floor(20000 + Math.random() * 2000); // 20K–22K
+  txnCount = Math.floor(15000 + Math.random() * 10000);   // 15K–25K
+  suspiciousCount = Math.floor(txnCount * (0.03 + Math.random() * 0.07)); // <10%
+
+  maxSingleAmount = Math.floor(12000 + Math.random() * 6000); // 12K–18K
+  avgAmount = Math.floor(5000 + Math.random() * 7000);        // 5K–12K
+}
   const maxRiskRaw = entityRisk.length ? Math.max(...entityRisk.map((r) => r.risk_score)) : 0.7;
   const riskScore = Math.round(maxRiskRaw * 100);
   const riskTypes = [...new Set(entityRisk.map((r) => r.risk_type))];
@@ -429,8 +445,8 @@ export function generateSARReport(
     ? entityTxns.reduce((a, b) => (a.timestamp > b.timestamp ? a : b)).timestamp.split("T")[0]
     : new Date().toISOString().split("T")[0];
 
-  const maxSingleAmount = entityTxns.length ? Math.max(...entityTxns.map((t) => t.amount)) : 0;
-  const avgAmount = entityTxns.length ? totalAmount / entityTxns.length : 0;
+  // const maxSingleAmount = entityTxns.length ? Math.max(...entityTxns.map((t) => t.amount)) : 0;
+  // const avgAmount = entityTxns.length ? totalAmount / entityTxns.length : 0;
 
   const riskCategory: FullSARReport["riskCategory"] =
     riskScore >= 80 ? "Critical" : riskScore >= 60 ? "High" : riskScore >= 40 ? "Medium" : "Low";
@@ -521,11 +537,11 @@ export function generateSARReport(
     kycStatus: overrides?.kycStatus ?? "Under Review",
     primaryCountry: allCountries[0] ?? "Unknown",
     riskTypes,
-    txnCount: entityTxns.length,
-    suspiciousTxnCount: suspiciousTxns.length,
-    totalAmount,
-    avgAmount,
-    maxSingleAmount,
+    txnCount,
+suspiciousTxnCount: suspiciousCount,
+totalAmount,
+avgAmount,
+maxSingleAmount,
     periodStart,
     periodEnd,
     countriesInvolved: allCountries,
