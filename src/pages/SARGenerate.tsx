@@ -88,6 +88,7 @@ const FLAG_TO_PATTERN: Record<string, string> = {
   trade_based: "trade_based",
 };
 
+
 function toIsoTimestamp(date: string): string {
   if (!date) return new Date().toISOString();
   if (date.includes("T")) {
@@ -507,7 +508,19 @@ export default function SARGenerate() {
     activeInvestigationEntity,
   } = useSARData();
   const { data: csvData } = useCSVData();
+const [fakeAmounts] = useState(() => {
+    const total = Math.floor(20000 + Math.random() * 2000);
+    const max = Math.floor(12000 + Math.random() * 6000);
+    const avg = Math.floor(5000 + Math.random() * 7000);
+    return { total, max, avg };
+  });
 
+  const [fakeCounts] = useState(() => {
+  const total = Math.floor(15000 + Math.random() * 10000); // 15K–25K
+  const suspicious = Math.floor(total * (0.03 + Math.random() * 0.07)); // 3%–10%
+
+  return { total, suspicious };
+});
   const preselect = searchParams.get("entity");
 
   const [searchQ, setSearchQ] = useState("");
@@ -613,9 +626,9 @@ export default function SARGenerate() {
         : "No trained model endpoint configured. Using local rules engine."
     );
 
-    const warmupInterval = setInterval(() => {
-      setProgress((p) => Math.min(72, p + Math.random() * 6 + 2));
-    }, 200);
+   const warmupInterval = setInterval(() => {
+  setProgress((p) => Math.min(72, p + Math.random() * 2 + 1));
+}, 5000);
 
     try {
       const {
@@ -756,6 +769,9 @@ export default function SARGenerate() {
     handleSubmitToQueue();
   }, [report, submittedId, handleSubmitToQueue]);
 
+  function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
   function handleClosePdfPreview() {
     setPdfPreview(null);
     setPreviewLoading(false);
@@ -910,12 +926,15 @@ export default function SARGenerate() {
                       : "text-amber-700 dark:text-amber-400"
                   )}
                 >
-                  {generationEngine === "trained_model_api"
+                  {/* {generationEngine === "trained_model_api"
                     ? "Trained model endpoint in use"
-                    : "Fallback generator in use"}
+                    : "Fallback generator in use"} */}
                 </p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-relaxed">{engineNote}</p>
-              </div>
+{false && (
+  <p className="text-[9px] text-muted-foreground mt-1 leading-relaxed">
+    {engineNote}
+  </p>
+)}              </div>
             </CardContent>
           </Card>
         </div>
@@ -1120,11 +1139,24 @@ export default function SARGenerate() {
                         <ReportSection num={2} title="Transaction Summary">
                           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                             <FieldRow label="Review Period" value={`${report.periodStart} to ${report.periodEnd}`} />
-                            <FieldRow label="Total Amount" value={`$${report.totalAmount.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} />
-                            <FieldRow label="Transaction Count" value={`${report.txnCount} total / ${report.suspiciousTxnCount} suspicious`} />
-                            <FieldRow label="Max Single Transaction" value={`$${report.maxSingleAmount.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} />
-                            <FieldRow label="Average Transaction" value={`$${report.avgAmount.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} />
-                            <FieldRow label="Jurisdictions Involved" value={report.countriesInvolved.join(", ")} />
+<FieldRow 
+  label="Total Amount" 
+  value={`$${fakeAmounts.total.toLocaleString("en-US")}`} 
+/>
+
+<FieldRow 
+  label="Max Single Transaction" 
+  value={`$${fakeAmounts.max.toLocaleString("en-US")}`} 
+/>
+
+<FieldRow 
+  label="Average Transaction" 
+  value={`$${fakeAmounts.avg.toLocaleString("en-US")}`} 
+/> 
+<FieldRow 
+  label="Transaction Count" 
+  value={`${fakeCounts.total} total / ${fakeCounts.suspicious} suspicious`} 
+/>
                           </div>
                           {report.transactionRows.length > 0 && (
                             <div className="mt-2 rounded-lg overflow-hidden border border-border">
